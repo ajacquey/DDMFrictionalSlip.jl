@@ -29,7 +29,8 @@ function run!(problem::HydroMechanicalProblem{T}, solver::Solver{T}, time_steppe
     # Apply ICs
 
     # Transient problem
-    while problem.t < time_stepper.t_end
+    it = 0 # time step
+    while time_stepper.time < time_stepper.end_time
         # Save old state
         @timeit timer "Reinitialize problem" reinit!(problem)
 
@@ -41,6 +42,10 @@ function run!(problem::HydroMechanicalProblem{T}, solver::Solver{T}, time_steppe
 
         # Update problem
         @timeit timer "Update problem" update!(problem, solver)
+        
+        # Update time stepper
+        it += 1
+        time_stepper.time = time_stepper.time_seq[it]
 
         # Reinit solver
         @timeit timer "Reinitialize Solver" reinit!(solver)
