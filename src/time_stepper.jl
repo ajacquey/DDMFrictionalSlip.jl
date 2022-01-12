@@ -1,6 +1,6 @@
 abstract type TimeStepper{T <: Real} end
 
-mutable struct TimeSequence{T <: Real} <: TimeStepper
+mutable struct TimeSequence{T <: Real} <: TimeStepper{T}
     # Current time
     time::T 
 
