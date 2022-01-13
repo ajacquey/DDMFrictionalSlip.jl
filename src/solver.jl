@@ -148,6 +148,8 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
     ##### Newton loop #####
     # Non-linear iterations
     nl_iter = 0
+    # Declare solution
+    dx = zeros(T, length(solver.rhs))
     # Initial residual
     assembleResidualAndJacobian!(solver, solver.problem, timer)
     r = norm(solver.rhs)
@@ -175,7 +177,7 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
             return
         end
         # Linear Solve
-        @timeit timer "Solve" dx, ch = cg(solver.mat, -solver.rhs; log = true, verbose = false)
+        @timeit timer "Solve" dx, ch = cg!(dx, solver.mat, -solver.rhs; log = true, verbose = false)
         if log
             println("    -> Linear Solve converged after ", ch.iters, " iterations")
         end
