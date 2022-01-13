@@ -73,16 +73,19 @@ function HydroMechanicalProblem(mesh::Mesh{T}, pressure_function::Function, para
     end
     # Stresses
     stress = Vector{Vector{T}}(undef, 2)
-    for i in 1:length(stress)
-        stress[i] = zeros(T, n_dofs_per_var)
-    end
+    # for i in 1:length(stress)
+    #     stress[i] = zeros(T, n_dofs_per_var)
+    # end
+    stress[1] = ones(T, n_dofs_per_var)
+    stress[2] = 12.0 * ones(T, n_dofs_per_var)
     # Fluid pressure
     p = zeros(T, n_dofs_per_var)
 
-    return HydroMechanicalProblem(mesh, order, pressure_function, n_dofs, x, disp, disp, stress, stress, p, p, param)
+    return HydroMechanicalProblem(mesh, order, pressure_function, n_dofs, x, disp, copy(disp), stress, copy(stress), p, copy(p), param)
 end
 
 function reinit!(problem::HydroMechanicalProblem{T}) where T <: Real
+    n_cp = problem.order + 1
     # Move current values as old
     for elem in problem.mesh.elems
         for i in 1:n_cp

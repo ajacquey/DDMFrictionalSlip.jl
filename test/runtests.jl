@@ -1,6 +1,4 @@
-using DDMFrictionalSlip
-using Test
 
-@testset "DDMFrictionalSlip.jl" begin
-    # Write your tests here.
-end
+include("opening.jl")
+
+include("generic.jl")

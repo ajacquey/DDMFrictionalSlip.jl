@@ -63,7 +63,7 @@ mutable struct IterativeSolver{T <: Real} <: Solver{T}
     problem::Problem{T}
 
     "The jacobian matrix"
-    mat::Matrix{T}
+    mat::SparseMatrixCSC{T, Int}
 
     "The residual vector"
     rhs::Vector{T}
@@ -120,10 +120,10 @@ function initialize!(solver::IterativeSolver{T}) where T <: Real
     return
 end
 
-function reinitialize!(solver::IterativeSolver{T}) where T <: Real
+function reinit!(solver::IterativeSolver{T}) where T <: Real
     fill!(solver.rhs, 0.0)
-    fill!(mat, 0.0)
-    fill!(solution, 0.0)
+    fill!(solver.mat, 0.0)
+    fill!(solver.solution, 0.0)
     return
 end
 
@@ -137,7 +137,7 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput) where T <: Real
     r = norm(solver.rhs)
     r0 = r
     # Preconditioner 
-    # p = AMGPreconditioner{RugeStuben}(solver.mat)
+    # @timeit timer "Preconditionning" precond = CholeskyPreconditioner(solver.mat, 2)
     println("  ", 0, " Nonlinear Iteration: |R| = ", r0)
     # Main loop
     while (nl_iter <= solver.nl_max_iters)
@@ -155,6 +155,7 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput) where T <: Real
         # Linear Solve
         @timeit timer "Solve" dx, ch = bicgstabl(solver.mat, -solver.rhs; log=true, verbose=false)
         println("    -> Linear Solve converged after ", ch.iters, " iterations")
+        # dx = solver.mat \ (-solver.rhs)
 
         # Update solution
         solver.solution += dx
@@ -162,7 +163,7 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput) where T <: Real
         assembleResidualAndJacobian!(solver, solver.problem, timer)
         r = norm(solver.rhs)
         # # Preconditioner 
-        # UpdatePreconditioner!(p, solver.mat)
+        # @timeit timer "Preconditionning" UpdatePreconditioner!(precond, -solver.mat)
 
         nl_iter += 1
         println("  ", nl_iter, " Nonlinear Iteration: |R| = ", norm(r))
