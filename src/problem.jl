@@ -1,6 +1,6 @@
-abstract type Problem{T <: Real} end
+abstract type Problem{T<:Real} end
 
-struct MechanicalProblem{T <: Real} <: Problem{T}
+struct MechanicalProblem{T<:Real} <: Problem{T}
     " The mesh of the problem"
     mesh::Mesh{T}
 
@@ -15,9 +15,12 @@ struct MechanicalProblem{T <: Real} <: Problem{T}
 
     " The collocation points coordinates"
     x::Vector{T}
+
+    " The displacements"
+    disp::Vector{T}
 end
 
-mutable struct HydroMechanicalProblem{T <: Real} <: Problem{T}
+mutable struct HydroMechanicalProblem{T<:Real} <: Problem{T}
     " The mesh of the problem"
     mesh::Mesh{T}
 
@@ -50,16 +53,16 @@ mutable struct HydroMechanicalProblem{T <: Real} <: Problem{T}
 end
 
 
-function MechanicalProblem(mesh::Mesh{T}, stress_function::Function; order::Int64 = 0) where T  <: Real
+function MechanicalProblem(mesh::Mesh{T}, stress_function::Function; order::Int64 = 0) where {T<:Real}
     # Collocation point coordinates
     x = collocationPointsCoordinates(mesh, order)
     # Total number of dofs
     n_dofs = mesh.n_elems * (order + 1)
 
-    return MechanicalProblem(mesh, order, stress_function, n_dofs, x)
+    return MechanicalProblem{T}(mesh, order, stress_function, n_dofs, x, zeros(T, n_dofs))
 end
 
-function HydroMechanicalProblem(mesh::Mesh{T}, pressure_function::Function, param::NamedTuple{}; order::Int64 = 0) where T <: Real
+function HydroMechanicalProblem(mesh::Mesh{T}, pressure_function::Function, param::NamedTuple{}; order::Int64 = 0) where {T<:Real}
     # Collocation point coordinates
     x = collocationPointsCoordinates(mesh, order)
     # Number of dofs per variable
@@ -81,10 +84,10 @@ function HydroMechanicalProblem(mesh::Mesh{T}, pressure_function::Function, para
     # Fluid pressure
     p = zeros(T, n_dofs_per_var)
 
-    return HydroMechanicalProblem(mesh, order, pressure_function, n_dofs, x, disp, copy(disp), stress, copy(stress), p, copy(p), param)
+    return HydroMechanicalProblem{T}(mesh, order, pressure_function, n_dofs, x, disp, copy(disp), stress, copy(stress), p, copy(p), param)
 end
 
-function reinit!(problem::HydroMechanicalProblem{T}) where T <: Real
+function reinit!(problem::HydroMechanicalProblem{T}) where {T<:Real}
     n_cp = problem.order + 1
     # Move current values as old
     for elem in problem.mesh.elems

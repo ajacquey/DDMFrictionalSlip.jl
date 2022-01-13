@@ -19,7 +19,7 @@ include("collocation/utils.jl")
 include("collocation/collocation_points.jl")
 include("collocation/elastic_kernels.jl")
 include("collocation/collocation_matrix.jl")
- 
+
 include("problem.jl")
 export MechanicalProblem, HydroMechanicalProblem
 

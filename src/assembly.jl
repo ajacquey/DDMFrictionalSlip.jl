@@ -1,4 +1,4 @@
-function assembleResidualAndJacobian!(solver::Solver{T}, problem::MechanicalProblem{T}, timer::TimerOutput) where T <: Real
+function assembleResidualAndJacobian!(solver::Solver{T}, problem::MechanicalProblem{T}, timer::TimerOutput) where {T<:Real}
     @timeit timer "Assembly" begin
         # Jacobian = Collocation matrix
         @timeit timer "Jacobian" begin
@@ -10,13 +10,14 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::MechanicalProb
             # Collocation stress
             @timeit timer "Collocation" mul!(solver.rhs, solver.mat, solver.solution)
             # Imposed stress
-            @timeit timer "Imposed stress" solver.rhs .-= problem.stress_function.(problem.x)
+            # @timeit timer "Imposed stress" solver.rhs .-= problem.stress_function.(problem.x)
+            @timeit timer "Imposed stress" imposedStress!(solver, problem)
         end
     end
     return
 end
 
-function assembleResidualAndJacobian!(solver::Solver{T}, problem::HydroMechanicalProblem{T}, timer::TimerOutput) where T <: Real
+function assembleResidualAndJacobian!(solver::Solver{T}, problem::HydroMechanicalProblem{T}, timer::TimerOutput) where {T<:Real}
     @timeit timer "Assembly" begin
         # Jacobian = Collocation matrix
         @timeit timer "Jacobian" begin
@@ -25,7 +26,7 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::HydroMechanica
             idx = 1:Int(problem.n_dofs / 2)
             @timeit timer "Collocation normal" collocationMatrix!(view(solver.mat, idx, idx), problem.mesh, problem.order; μ = μ)
             # Index range
-            idx = (Int(problem.n_dofs / 2) + 1):problem.n_dofs
+            idx = (Int(problem.n_dofs / 2)+1):problem.n_dofs
             @timeit timer "Collocation shear" collocationMatrix!(view(solver.mat, idx, idx), problem.mesh, problem.order; μ = μ)
         end
         # println("Collocation matrix:")
@@ -37,7 +38,7 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::HydroMechanica
             idx = 1:Int(problem.n_dofs / 2)
             @timeit timer "Collocation normal" mul!(view(solver.rhs, idx), view(solver.mat, idx, idx), view(solver.solution, idx))
             # Index range
-            idx = (Int(problem.n_dofs / 2) + 1):problem.n_dofs
+            idx = (Int(problem.n_dofs / 2)+1):problem.n_dofs
             @timeit timer "Collocation shear" mul!(view(solver.rhs, idx), view(solver.mat, idx, idx), view(solver.solution, idx))
         end
         # println("Current solution")
@@ -45,17 +46,34 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::HydroMechanica
         # println("Collocation residuals")
         # display(solver.rhs)
         # Frictional stress
-        @timeit timer "Frictional stress" frictionalConstraints(solver, problem)
+        @timeit timer "Frictional stress" frictionalConstraints!(solver, problem)
         # println("Modified jacobian:")
         # display(solver.mat)
         # println("Modified residuals")
         # display(solver.rhs)
-       dropzeros!(solver.mat) 
+        dropzeros!(solver.mat)
     end
     return
 end
 
-function frictionalConstraints(solver::Solver{T}, problem::HydroMechanicalProblem{T}) where T <: Real
+function imposedStress!(solver::Solver{T}, problem::MechanicalProblem{T}) where {T<:Real}
+    # Number of collocation points
+    n_cp = problem.order + 1
+
+    # Loop over elements
+    for elem in problem.mesh.elems
+        for i in 1:n_cp
+            # Effective idx
+            idx = (elem.id - 1) * n_cp + i
+
+            solver.rhs[idx] -= problem.stress_function(problem.x[idx])
+        end
+    end
+
+    return
+end
+
+function frictionalConstraints!(solver::Solver{T}, problem::HydroMechanicalProblem{T}) where {T<:Real}
     # Number of collocation points
     n_cp = problem.order + 1
     # Number of dofs per variable
@@ -102,9 +120,9 @@ function frictionalConstraints(solver::Solver{T}, problem::HydroMechanicalProble
             solver.mat[i_glo, i_glo] -= μ / h
             # Residuals
             # Normal stress
-            solver.rhs[i_loc] -= ((problem.p[i_loc] - problem.p_old[i_loc]) + (problem.stress[1][i_loc] - problem.stress_old[1][i_loc])) 
+            solver.rhs[i_loc] -= ((problem.p[i_loc] - problem.p_old[i_loc]) + (problem.stress[1][i_loc] - problem.stress_old[1][i_loc]))
             # Shear stress
-            solver.rhs[i_glo] -= (problem.stress[2][i_loc] - problem.stress_old[2][i_loc]) 
+            solver.rhs[i_glo] -= (problem.stress[2][i_loc] - problem.stress_old[2][i_loc])
         end
     end
 end

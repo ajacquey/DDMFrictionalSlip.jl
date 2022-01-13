@@ -1,18 +1,18 @@
-function collocationPointsCoordinates(mesh::Mesh{T}, order::Int64) where T <: Real
+function collocationPointsCoordinates(mesh::Mesh{T}, order::Int64) where {T<:Real}
     # Number of collocation points
     n_cp = order + 1
     # Declare results
     c_points = zeros(T, mesh.n_elems * n_cp)
-    
+
 
     Threads.@threads for elem in mesh.elems
-        c_points[(elem.id - 1) * n_cp + 1:elem.id * n_cp] .= elemCollocationPointsCoordinates(elem, order)
+        c_points[(elem.id-1)*n_cp+1:elem.id*n_cp] .= elemCollocationPointsCoordinates(elem, order)
     end
 
     return c_points
 end
 
-function elemCollocationPointsCoordinates(elem::Elem{T}, order::Int64) where T <: Real
+function elemCollocationPointsCoordinates(elem::Elem{T}, order::Int64) where {T<:Real}
     if elem.type == :Edge1D
         return elemCollocationPoints1DCoordinates(elem, order)
     else
@@ -20,7 +20,7 @@ function elemCollocationPointsCoordinates(elem::Elem{T}, order::Int64) where T <
     end
 end
 
-function elemCollocationPoints(elem::Elem{T}, order::Int64) where T <: Real
+function elemCollocationPoints(elem::Elem{T}, order::Int64) where {T<:Real}
     if elem.type == :Edge1D
         return elemCollocationPoints1D(elem, order)
     else
@@ -28,12 +28,12 @@ function elemCollocationPoints(elem::Elem{T}, order::Int64) where T <: Real
     end
 end
 
-function elemCollocationPoints1DCoordinates(elem::Elem{T}, order::Int64) where T <: Real
+function elemCollocationPoints1DCoordinates(elem::Elem{T}, order::Int64) where {T<:Real}
     # Number of collocation points
     n_cp = order + 1
     # Declare vector for c_points
     c_points = zeros(T, n_cp)
-    
+
     # Element half length
     aj = elementHalfLength(elem)
 
@@ -55,12 +55,12 @@ function elemCollocationPoints1DCoordinates(elem::Elem{T}, order::Int64) where T
     return c_points
 end
 
-function elemCollocationPoints1D(elem::Elem{T}, order::Int64) where T <: Real
+function elemCollocationPoints1D(elem::Elem{T}, order::Int64) where {T<:Real}
     # Number of collocation points
     n_cp = order + 1
     # Declare vector for c_points
-    c_points = Vector{Point{T}}(undef,n_cp)
-    
+    c_points = Vector{Point{T}}(undef, n_cp)
+
     # Element half length
     aj = elementHalfLength(elem)
 

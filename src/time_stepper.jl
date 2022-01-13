@@ -1,8 +1,8 @@
-abstract type TimeStepper{T <: Real} end
+abstract type TimeStepper{T<:Real} end
 
-mutable struct TimeSequence{T <: Real} <: TimeStepper{T}
+mutable struct TimeSequence{T<:Real} <: TimeStepper{T}
     # Current time
-    time::T 
+    time::T
 
     # Start time
     start_time::T
@@ -14,7 +14,7 @@ mutable struct TimeSequence{T <: Real} <: TimeStepper{T}
     time_seq::Vector{T}
 end
 
-function TimeSequence(time_seq::Vector{T}; start_time::T=time_seq[1], end_time::T=time_seq[end]) where T <: Real
+function TimeSequence(time_seq::Vector{T}; start_time::T = time_seq[1], end_time::T = time_seq[end]) where {T<:Real}
     if (~issorted(time_seq))
         throw(DomainError(time_seq, "Time sequence need to be sorted!"))
     end
