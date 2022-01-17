@@ -4,9 +4,11 @@ using LinearAlgebra
 using SparseArrays
 using IterativeSolvers
 using Preconditioners
+using IncompleteLU
 # using AlgebraicMultigrid
 using TimerOutputs
 using UnPack
+using DelimitedFiles
 
 # Mesh
 include("mesh/point.jl")
@@ -20,8 +22,11 @@ include("collocation/collocation_points.jl")
 include("collocation/elastic_kernels.jl")
 include("collocation/collocation_matrix.jl")
 
+include("time_stepper.jl")
+export TimeSequence
+
 include("problem.jl")
-export MechanicalProblem, HydroMechanicalProblem
+export Problem
 
 include("solver.jl")
 export IterativeSolver
@@ -29,8 +34,8 @@ export IterativeSolver
 
 include("assembly.jl")
 
-include("time_stepper.jl")
-export TimeSequence
+include("output.jl")
+export DomainOutput, MaximumOutput
 
 include("executioner.jl")
 export run!

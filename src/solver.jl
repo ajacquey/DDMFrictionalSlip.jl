@@ -1,3 +1,39 @@
+
+begin
+    # Data struture: we store the inverse of the main diagonal
+    struct JacobiPreconditioner
+        invdiag::Vector
+    end
+    
+    # Constructor:
+    function JacobiPreconditioner(A::AbstractMatrix)
+        n=size(A,1)
+        invdiag=zeros(n)
+
+        for i=1:n
+            invdiag[i]=1.0/A[i,i]
+        end
+
+        JacobiPreconditioner(invdiag)
+    end
+
+    # Solution of preconditioning system   Mu=v
+    # Method name and signature are compatible to IterativeSolvers.jl
+    function LinearAlgebra.ldiv!(u,precon::JacobiPreconditioner,v)
+        invdiag=precon.invdiag
+        n=length(invdiag)
+        for i=1:n
+            u[i]=invdiag[i]*v[i]
+        end
+        u
+    end
+    
+    # In-place solution of preconditioning system
+    function  LinearAlgebra.ldiv!(precon::JacobiPreconditioner,v)
+        ldiv!(v,precon,v)
+    end
+end
+
 abstract type Solver{T<:Real} end
 
 " Must be overriden by Solver implementations to actually do the solve "
@@ -60,7 +96,7 @@ end
 
 mutable struct IterativeSolver{T<:Real} <: Solver{T}
     "The Problem this solver will act on"
-    problem::Problem{T}
+    problem::AbstractProblem{T}
 
     "The jacobian matrix"
     mat::AbstractMatrix{T}
@@ -98,12 +134,13 @@ mutable struct IterativeSolver{T<:Real} <: Solver{T}
 end
 
 """
-Constructor for MechanicalProblem
+Constructor for Problem
 """
-function IterativeSolver(problem::MechanicalProblem{T}; nl_max_iters::Int64 = 100, nl_abs_tol::T = 1.0e-10, nl_rel_tol::T = 1.0e-10) where {T<:Real}
+function IterativeSolver(problem::AbstractProblem{T}; nl_max_iters::Int64 = 100, nl_abs_tol::T = 1.0e-10, nl_rel_tol::T = 1.0e-10) where {T<:Real}
     return IterativeSolver{T}(
         problem,
-        Matrix{T}(undef, problem.n_dofs, problem.n_dofs),
+        sprand(T, problem.n_dofs, problem.n_dofs, 1.0),
+        # Matrix{T}(undef, problem.n_dofs, problem.n_dofs),
         Vector{T}(undef, problem.n_dofs),
         Vector{T}(undef, problem.n_dofs),
         false,
@@ -129,7 +166,7 @@ function initialize!(solver::IterativeSolver{T}) where {T<:Real}
 
     n_dofs = solver.problem.n_dofs
 
-    solver.mat = zeros(T, n_dofs, n_dofs)
+    solver.mat = sprand(T, n_dofs, n_dofs, 1.0)
     solver.rhs = zeros(T, n_dofs)
     solver.solution = zeros(T, n_dofs)
     solver.initialized = true
@@ -154,8 +191,11 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
     assembleResidualAndJacobian!(solver, solver.problem, timer)
     r = norm(solver.rhs)
     r0 = r
+    # Pardiso
+    # ps = MKLPardisoSolver()
     # Preconditioner 
-    # @timeit timer "Preconditionning" precond = CholeskyPreconditioner(solver.mat, 2)
+    @timeit timer "Preconditionning" precond = ilu(-solver.mat, τ = 0.01)
+    # @timeit timer "Preconditionning" precond = JacobiPreconditioner(solver.mat)
     if log
         println("  ", 0, " Nonlinear Iteration: |R| = ", r0)
     end
@@ -177,18 +217,25 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
             return
         end
         # Linear Solve
-        @timeit timer "Solve" dx, ch = cg!(dx, solver.mat, -solver.rhs; log = true, verbose = false)
+        @timeit timer "Solve" dx, ch = bicgstabl!(dx, -solver.mat, solver.rhs; Pl = precond, log = true, verbose = false, abstol = 1.0e-10, reltol=1.0e-10)
+        # @timeit timer "Solve" dx = jacobi!(dx, solver.mat, -solver.rhs; maxiter = 200)
+        # @timeit timer "Solve" dx = Pardiso.solve(ps, solver.mat, -solver.rhs)
         if log
-            println("    -> Linear Solve converged after ", ch.iters, " iterations")
+            if ch.isconverged
+                println("    -> Linear Solve converged after ", ch.iters, " iterations")
+            else
+                println("    -> Linear Solve did NOT converge after ", ch.iters, " iterations")
+            end
         end
-
+        # println(dx)
+        # throw(ErrorException("Stop!"))
         # Update solution
-        solver.solution += dx
+        solver.solution .+= dx
         # Update residuals and jacobian
         assembleResidualAndJacobian!(solver, solver.problem, timer)
         r = norm(solver.rhs)
-        # # Preconditioner 
-        # @timeit timer "Preconditionning" UpdatePreconditioner!(precond, -solver.mat)
+        # Preconditioner 
+        @timeit timer "Preconditionning" precond = ilu(-solver.mat, τ = 0.01)
 
         nl_iter += 1
         if log
