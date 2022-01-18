@@ -2,7 +2,7 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::AbstractProble
     @timeit timer "Assembly" begin
         # Jacobian = Collocation matrix
         @timeit timer "Jacobian" begin
-            @timeit timer "Collocation" collocationMatrix!(solver.mat, problem.mesh, problem.order)
+            @timeit timer "Collocation" collocationMatrix!(solver.mat, problem.mesh, problem.order; μ = problem.μ)
         end
 
         # Residuals = collocation stress - imposed stress

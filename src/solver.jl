@@ -217,7 +217,7 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
             return
         end
         # Linear Solve
-        @timeit timer "Solve" dx, ch = bicgstabl!(dx, -solver.mat, solver.rhs; Pl = precond, log = true, verbose = false, abstol = 1.0e-10, reltol=1.0e-10)
+        @timeit timer "Solve" dx, ch = gmres!(dx, solver.mat, -solver.rhs; Pl = precond, log = true, verbose = false, abstol = 1.0e-10, reltol=1.0e-10)
         # @timeit timer "Solve" dx = jacobi!(dx, solver.mat, -solver.rhs; maxiter = 200)
         # @timeit timer "Solve" dx = Pardiso.solve(ps, solver.mat, -solver.rhs)
         if log

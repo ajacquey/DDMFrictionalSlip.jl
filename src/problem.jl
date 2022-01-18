@@ -11,6 +11,9 @@ mutable struct SteadyProblem{T<:Real} <: AbstractProblem{T}
     " The order of the basis functions"
     order::Int64
 
+    " The elastic modulus"
+    μ::Float64
+
     " Functions describing the stress residuals and jacobian"
     stress_residuals::Function
     stress_jacobian::Function
@@ -34,6 +37,9 @@ mutable struct TransientProblem{T<:Real} <: AbstractProblem{T}
 
     " The order of the basis functions"
     order::Int64
+
+    " The elastic modulus"
+    μ::Float64
 
     " Functions describing the stress residuals and jacobian"
     stress_residuals::Function
@@ -99,7 +105,7 @@ end
 # end
 
 
-function Problem(mesh::Mesh{T}, stress_res::Function, stress_jac::Function; order::Int64 = 0, transient::Bool = false) where {T<:Real}
+function Problem(mesh::Mesh{T}, stress_res::Function, stress_jac::Function; μ::T = 1.0, order::Int64 = 0, transient::Bool = false) where {T<:Real}
     # Collocation point coordinates
     x = collocationPointsCoordinates(mesh, order)
     # Total number of dofs
@@ -112,9 +118,9 @@ function Problem(mesh::Mesh{T}, stress_res::Function, stress_jac::Function; orde
     if (transient)
         disp_old = zeros(T, n_dofs)
         stress_old = zeros(T, n_dofs)
-        return TransientProblem{T}(mesh, order, stress_res, stress_jac, n_dofs, x, 0.0, 0.0, 0.0, 0, disp, disp_old, stress, stress_old)
+        return TransientProblem{T}(mesh, order, μ, stress_res, stress_jac, n_dofs, x, 0.0, 0.0, 0.0, 0, disp, disp_old, stress, stress_old)
     else
-        return SteadyProblem{T}(mesh, order, stress_res, stress_jac, n_dofs, x, disp, stress)
+        return SteadyProblem{T}(mesh, order, μ, stress_res, stress_jac, n_dofs, x, disp, stress)
     end
 end
 
