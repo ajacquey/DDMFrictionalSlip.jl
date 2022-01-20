@@ -2,7 +2,13 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::AbstractProble
     @timeit timer "Assembly" begin
         # Jacobian = Collocation matrix
         @timeit timer "Jacobian" begin
-            @timeit timer "Collocation" collocationMatrix!(solver.mat, problem.mesh, problem.order; μ = problem.μ)
+            @timeit timer "Collocation" begin
+                for var in problem.vars
+                    # Index range
+                    idx = ((var.id -1) * problem.n_cps + 1):(var.id * problem.n_cps)
+                    collocationMatrix!(view(solver.mat, idx, idx), problem.mesh, problem.order; μ = problem.μ)
+                end
+            end
         end
 
         # Residuals = collocation stress - imposed stress
@@ -68,10 +74,17 @@ function stressResiduals!(solver::Solver{T}, problem::SteadyProblem{T}) where {T
     # Loop over elements
     Threads.@threads for elem in problem.mesh.elems
         for i in 1:n_cp
-            # Effective idx
-            idx = (elem.id - 1) * n_cp + i
+            for var in problem.vars
+                # Effective idx
+                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
+                idx_var = (elem.id - 1) * n_cp + i
 
-            solver.rhs[idx] -= problem.stress_residuals(problem.x[idx], solver.solution[idx])
+                for aux_var in problem.aux_vars
+                    if aux_var.ass_var == var.sym
+                        solver.rhs[idx] -= aux_var.func(problem.x[idx_var], solver.solution[idx])
+                    end
+                end
+            end
         end
     end
 
@@ -85,10 +98,17 @@ function stressResiduals!(solver::Solver{T}, problem::TransientProblem{T}) where
     # Loop over elements
     Threads.@threads for elem in problem.mesh.elems
         for i in 1:n_cp
-            # Effective idx
-            idx = (elem.id - 1) * n_cp + i
+            for var in problem.vars
+                # Effective idx
+                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
+                idx_var = (elem.id - 1) * n_cp + i
 
-            solver.rhs[idx] -= problem.stress_residuals(problem.stress_old[idx], problem.x[idx], problem.time, solver.solution[idx])
+                for aux_var in problem.aux_vars
+                    if aux_var.ass_var == var.sym
+                        solver.rhs[idx] -= (aux_var.func(aux_var.u_old[idx_var], problem.x[idx_var], problem.time, solver.solution[idx]) - aux_var.u_old[idx_var])
+                    end
+                end
+            end
         end
     end
 
@@ -102,12 +122,21 @@ function stressJacobian!(solver::Solver{T}, problem::SteadyProblem{T}) where {T<
     # Loop over elements
     Threads.@threads for elem in problem.mesh.elems
         for i in 1:n_cp
-            # Effective idx
-            idx = (elem.id - 1) * n_cp + i
+            for var in problem.vars
+                # Effective idx
+                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
+                idx_var = (elem.id - 1) * n_cp + i
 
-            solver.mat[idx, idx] -= problem.stress_jacobian(problem.x[idx], solver.solution[idx])
+                for aux_var in problem.aux_vars
+                    if aux_var.ass_var == var.sym
+                        solver.mat[idx, idx] -= aux_var.dfunc(problem.x[idx_var], solver.solution[idx])
+                    end
+                end
+            end
         end
     end
+
+    return
 end
 
 function stressJacobian!(solver::Solver{T}, problem::TransientProblem{T}) where {T<:Real}
@@ -117,12 +146,21 @@ function stressJacobian!(solver::Solver{T}, problem::TransientProblem{T}) where 
     # Loop over elements
     Threads.@threads for elem in problem.mesh.elems
         for i in 1:n_cp
-            # Effective idx
-            idx = (elem.id - 1) * n_cp + i
+            for var in problem.vars
+                # Effective idx
+                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
+                idx_var = (elem.id - 1) * n_cp + i
 
-            solver.mat[idx, idx] -= problem.stress_jacobian(problem.stress_old[idx], problem.x[idx], problem.time, solver.solution[idx])
+                for aux_var in problem.aux_vars
+                    if aux_var.ass_var == var.sym
+                        solver.mat[idx, idx] -= aux_var.dfunc(aux_var.u_old[idx_var], problem.x[idx_var], problem.time, solver.solution[idx])
+                    end
+                end
+            end
         end
     end
+    
+    return
 end
 
 # function frictionalConstraints!(solver::Solver{T}, problem::HydroMechanicalProblem{T}) where {T<:Real}

@@ -2,10 +2,15 @@ function run!(problem::SteadyProblem{T}, solver::Solver{T}; log::Bool = true) wh
     # Timer
     timer = TimerOutput()
 
-    # Display some information about simulation
+    # Initialize problem
+    @timeit timer "Initialize Problem" initialize!(problem)
 
     # Initialize solver
     @timeit timer "Initialize Solver" initialize!(solver)
+
+    # Display some information about simulation
+
+    # Apply ICs
 
     # Steady state problem
     solve!(solver, timer; log)
@@ -26,13 +31,16 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
     # Timer
     timer = TimerOutput()
 
-    # Display some information about simulation
+    # Initialize problem
+    @timeit timer "Initialize Problem" initialize!(problem)
 
     # Initialize solver
     @timeit timer "Initialize Solver" initialize!(solver)
 
     # Initialize outputs
     @timeit timer "Initialize Outputs" initializeOutputs!(outputs)
+
+    # Display some information about simulation
 
     # Apply ICs
 
@@ -121,13 +129,23 @@ end
 function update!(problem::SteadyProblem{T}, solver::Solver{T}) where {T<:Real}
     n_cp = problem.order + 1
     # Update displacements
-    for elem in problem.mesh.elems
+    Threads.@threads for elem in problem.mesh.elems
         for i in 1:n_cp
-            # Effective idx
-            idx = (elem.id - 1) * n_cp + i
+            for var in problem.vars
+                # Effective idx
+                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
+                idx_var = (elem.id - 1) * n_cp + i
 
-            # Update displacements
-            problem.disp[idx] = solver.solution[idx]
+                # Update displacements
+                var.u[idx_var] = solver.solution[idx]
+
+                # Update stress
+                for aux_var in problem.aux_vars
+                    if aux_var.ass_var == var.sym
+                        aux_var.u[idx_var] = aux_var.func(problem.x[idx_var], solver.solution[idx])
+                    end
+                end
+            end
         end
     end
     return
@@ -136,16 +154,23 @@ end
 function update!(problem::TransientProblem{T}, solver::Solver{T}) where {T<:Real}
     n_cp = problem.order + 1
     # Update displacements
-    for elem in problem.mesh.elems
-        for i in 1:n_cp
-            # Effective idx
-            idx = (elem.id - 1) * n_cp + i
+    Threads.@threads for elem in problem.mesh.elems
+        for var in problem.vars
+            for i in 1:n_cp
+                # Effective idx
+                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
+                idx_var = (elem.id - 1) * n_cp + i
 
-            # Update displacements
-            problem.disp[idx] = problem.disp_old[idx] + solver.solution[idx]
+                # Update displacements
+                var.u[idx_var] = var.u_old[idx_var] + solver.solution[idx]
 
-            # Update stress
-            problem.stress[idx] = problem.stress_old[idx] + problem.stress_residuals(problem.stress_old[idx], problem.x[idx], problem.time, solver.solution[idx])
+                # Update stress
+                for aux_var in problem.aux_vars
+                    if aux_var.ass_var == var.sym
+                        aux_var.u[idx_var] = aux_var.func(aux_var.u_old[idx_var], problem.x[idx_var], problem.time, solver.solution[idx])
+                    end
+                end
+            end
         end
     end
     # Time

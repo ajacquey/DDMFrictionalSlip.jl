@@ -22,14 +22,16 @@ end
     @testset "PWC basis functions" begin
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh, stress_res, stress_jac; order = 0)
+        problem = Problem(mesh; order = 0)
         solver = IterativeSolver(problem)
+        addVariable!(problem, :u)
+        addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
         run!(problem, solver; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)
         # Error
-        err = mean(abs.(problem.disp - δ_sol) ./ δ_sol)
+        err = mean(abs.(problem.vars[1].u - δ_sol) ./ δ_sol)
         # Error less than 2%
         @test err < 0.02
     end
@@ -37,14 +39,16 @@ end
     @testset "PWLC basis functions" begin
         mesh = Mesh1D(-1.0, 1.0, 48)
 
-        problem = Problem(mesh, stress_res, stress_jac; order = 1)
+        problem = Problem(mesh; order = 1)
         solver = IterativeSolver(problem)
+        addVariable!(problem, :u)
+        addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
         run!(problem, solver; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)
         # Error
-        err = mean(abs.(problem.disp - δ_sol) ./ δ_sol)
+        err = mean(abs.(problem.vars[1].u - δ_sol) ./ δ_sol)
         # Error less than 2%
         @test err < 0.02
     end
@@ -52,14 +56,16 @@ end
     @testset "PWQC basis functions" begin
         mesh = Mesh1D(-1.0, 1.0, 32)
 
-        problem = Problem(mesh, stress_res, stress_jac; order = 2)
+        problem = Problem(mesh; order = 2)
         solver = IterativeSolver(problem)
+        addVariable!(problem, :u)
+        addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
         run!(problem, solver; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)
         # Error
-        err = mean(abs.(problem.disp - δ_sol) ./ δ_sol)
+        err = mean(abs.(problem.vars[1].u - δ_sol) ./ δ_sol)
         # Error less than 2%
         @test err < 0.02
     end

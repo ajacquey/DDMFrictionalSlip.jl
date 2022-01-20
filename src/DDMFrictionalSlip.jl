@@ -25,8 +25,10 @@ include("collocation/collocation_matrix.jl")
 include("time_stepper.jl")
 export TimeSequence
 
+include("variable.jl")
+
 include("problem.jl")
-export Problem
+export Problem, addVariable!, addAuxVariable!
 
 include("solver.jl")
 export IterativeSolver
