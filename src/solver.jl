@@ -32,7 +32,7 @@ Constructor for Solver
 function IterativeSolver(problem::AbstractProblem{T}; nl_max_iters::Int64 = 100, nl_abs_tol::T = 1.0e-10, nl_rel_tol::T = 1.0e-10) where {T<:Real}
     return IterativeSolver{T}(
         problem,
-        sprand(T, problem.n_dofs, problem.n_dofs, 1.0),
+        spzeros(T, problem.n_dofs, problem.n_dofs),
         Vector{T}(undef, problem.n_dofs),
         Vector{T}(undef, problem.n_dofs),
         false,
@@ -56,8 +56,8 @@ end
 function initialize!(solver::IterativeSolver{T}) where {T<:Real}
     # To call after initializing the problem
     n_dofs = solver.problem.n_dofs
-
-    solver.mat = sprand(T, n_dofs, n_dofs, 1.0)
+    solver.mat = spzeros(T, n_dofs, n_dofs)
+    reinitSparsityPattern!(solver.mat, solver.problem; first_run=true)
     solver.rhs = zeros(T, n_dofs)
     solver.solution = zeros(T, n_dofs)
     solver.initialized = true
@@ -66,22 +66,25 @@ end
 
 function reinit!(solver::IterativeSolver{T}) where {T<:Real}
     fill!(solver.rhs, 0.0)
-    reinitSparsityPattern!(solver.mat, solver.provblem)
+    reinitSparsityPattern!(solver.mat, solver.problem)
     fill!(solver.solution, 0.0)
     return
 end
 
-function reinitSparsityPattern!(mat::AbstractMatrix{T}, problem::AbstractProblem{T}) where {T<:Real}
+function reinitSparsityPattern!(mat::AbstractMatrix{T}, problem::AbstractProblem{T}; first_run = false) where {T<:Real}
     # Loop over variables
     for var_i in problem.vars
         # Index range
-        idx_i = ((var_i - 1) * problem.n_cps):(var_i * problem.n_cps)
+        idx_i = ((var_i.id - 1) * problem.n_cps + 1):(var_i.id * problem.n_cps)
         for var_j in problem.vars
             # Index range
-            idx_j = ((var_i - 1) * problem.n_cps):(var_j * problem.n_cps)
-            if var_i.id == var_j.id # Diagonal blocks
-                view(mat, idx_i, idx_j) .= sprand(T, problem.n_cps, problem.n_cps)
-            else # Off-diagonal blocks
+            idx_j = ((var_i.id - 1) * problem.n_cps + 1):(var_j.id * problem.n_cps)
+            if first_run
+                if var_i.id == var_j.id # Diagonal blocks
+                    view(mat, idx_i, idx_j) .= sprand(T, problem.n_cps, problem.n_cps, 1.0)
+                end
+            end
+            if var_i.id != var_j.id # Off-diagonal blocks
                 view(mat, idx_i, idx_j) .= spdiagm(0 => zeros(T, problem.n_cps))
             end
         end
@@ -104,7 +107,7 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
     # Pardiso
     # ps = MKLPardisoSolver()
     # Preconditioner 
-    @timeit timer "Preconditionning" precond = ilu(solver.mat, τ = 0.01)
+    # @timeit timer "Preconditionning" precond = ilu(solver.mat, τ = 0.01)
     # @timeit timer "Preconditionning" precond = JacobiPreconditioner(solver.mat)
     if log
         println("  ", 0, " Nonlinear Iteration: |R| = ", r0)
@@ -127,7 +130,7 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
             return
         end
         # Linear Solve
-        @timeit timer "Solve" dx, ch = gmres!(dx, solver.mat, -solver.rhs; Pl = precond, log = true, verbose = false, abstol = 1.0e-10, reltol=1.0e-10)
+        @timeit timer "Solve" dx, ch = bicgstabl!(dx, solver.mat, -solver.rhs; log = true, verbose = false, abstol = 1.0e-10, reltol=1.0e-10)
         # @timeit timer "Solve" dx = jacobi!(dx, solver.mat, -solver.rhs; maxiter = 200)
         # @timeit timer "Solve" dx = Pardiso.solve(ps, solver.mat, -solver.rhs)
         if log
@@ -144,7 +147,7 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
         assembleResidualAndJacobian!(solver, solver.problem, timer)
         r = norm(solver.rhs)
         # Preconditioner 
-        @timeit timer "Preconditionning" precond = ilu(solver.mat, τ = 0.01)
+        # @timeit timer "Preconditionning" precond = ilu(solver.mat, τ = 0.01)
 
         nl_iter += 1
         if log

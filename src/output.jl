@@ -34,7 +34,7 @@ function checkFilename(filename::String)
         if (startswith(filename, '/')) # absolute path
             output_dir = filename[1:k_end]
         else # relative path
-            output_dir = string(@__DIR__, "/", filename[1:k_end])
+            output_dir = string(pwd(), "/", filename[1:k_end])
         end
         # Create folder if it doesn't exist
         if (!isdir(output_dir))

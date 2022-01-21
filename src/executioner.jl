@@ -27,7 +27,7 @@ function run!(problem::SteadyProblem{T}, solver::Solver{T}; log::Bool = true) wh
     return
 end
 
-function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::TimeStepper; outputs::Vector{AbstractOutput}) where {T<:Real}
+function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::TimeStepper; outputs::Vector{AbstractOutput}=Vector{AbstractOutput}(undef, 0)) where {T<:Real}
     # Timer
     timer = TimerOutput()
 
@@ -38,7 +38,9 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
     @timeit timer "Initialize Solver" initialize!(solver)
 
     # Initialize outputs
-    @timeit timer "Initialize Outputs" initializeOutputs!(outputs)
+    if ~isempty(outputs)
+        @timeit timer "Initialize Outputs" initializeOutputs!(outputs)
+    end
 
     # Display some information about simulation
 
@@ -67,7 +69,9 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
         @timeit timer "Update problem" update!(problem, solver)
 
         # Output
-        @timeit timer "Outputs" outputResults!(outputs, problem)
+        if ~isempty(outputs)
+            @timeit timer "Outputs" outputResults!(outputs, problem)
+        end
 
         # Reinit solver
         @timeit timer "Reinitialize Solver" reinit!(solver)
