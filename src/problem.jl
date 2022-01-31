@@ -117,7 +117,7 @@ function reinit!(problem::TransientProblem{T}, time_stepper::TimeStepper{T}) whe
 end
 
 function default_ic(x::Vector{T}) where {T<:Real}
-    return zeros(x)
+    return zero(x)
 end
 
 function addVariable!(problem::AbstractProblem{T}, sym::Symbol; func_ic::Function = default_ic) where {T<:Real}
