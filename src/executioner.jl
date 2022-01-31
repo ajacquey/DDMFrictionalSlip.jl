@@ -27,7 +27,7 @@ function run!(problem::SteadyProblem{T}, solver::Solver{T}; log::Bool = true) wh
     return
 end
 
-function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::TimeStepper; outputs::Vector{AbstractOutput}=Vector{AbstractOutput}(undef, 0)) where {T<:Real}
+function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::TimeStepper; log::Bool = true, outputs::Vector{AbstractOutput}=Vector{AbstractOutput}(undef, 0)) where {T<:Real}
     # Timer
     timer = TimerOutput()
 
@@ -49,8 +49,10 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
     # Transient problem
     problem.time = time_stepper.start_time
     problem.time_old = time_stepper.start_time
-    println("Time Step ", problem.time_step, ": time = ", problem.time, " dt = ", 0.0)
-    println()
+    if log
+        println("Time Step ", problem.time_step, ": time = ", problem.time, " dt = ", 0.0)
+        println()
+    end
 
     while problem.time < (time_stepper.end_time - time_stepper.tol)
         # Update iteration number
@@ -60,10 +62,12 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
         @timeit timer "Reinitialize problem" reinit!(problem, time_stepper)
 
         # Print time step information
-        println("Time Step ", problem.time_step, ": time = ", problem.time, " dt = ", problem.dt)
-
+        if log
+            println("Time Step ", problem.time_step, ": time = ", problem.time, " dt = ", problem.dt)
+        end
+        
         # Actual solve
-        solve!(solver, timer)
+        solve!(solver, timer; log)
 
         # Update problem
         @timeit timer "Update problem" update!(problem, solver)
@@ -78,8 +82,10 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
     end
 
     # End of simulation information - TimerOutputs
-    show(timer, title = "Performance graph")
-    println()
+    if log
+        show(timer, title = "Performance graph")
+        println()
+    end
 
     return
 end

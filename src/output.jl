@@ -108,7 +108,7 @@ function execute!(output::MaximumOutput, problem::TransientProblem{T}) where {T<
     return
 end
 
-function outputResults!(outputs::Vector{AbstractOutput}, problem::AbstractProblem)
+function outputResults!(outputs::Vector{AbstractOutput}, problem::AbstractProblem{T}) where {T<:Real}
     for output in outputs
         execute!(output, problem)
     end

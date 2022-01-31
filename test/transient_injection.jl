@@ -39,15 +39,18 @@ const α = 0.04::Float64
 
         solver = IterativeSolver(problem)
 
-        time_seq = collect(range(0.5, stop=10.0, step=20))
+        time_seq = collect(range(0.5, stop=10.0, length=20))
         time_stepper = TimeSequence(time_seq; start_time=0.0, end_time=10.0)
 
         output = [DomainOutput("outputs/transient_opening"), MaximumOutput("outputs/transient_opening_max")]
 
-        run!(problem, solver, time_stepper; outputs=output)
-        display(problem.vars[1].u)
-        @test 1 == 1
-
+        run!(problem, solver, time_stepper; log = false, outputs = output)
+        # Analytical solution
+        u_sol = -h / λ * Δp * erfc.(abs.(problem.x) / sqrt(α * problem.time))
+        # Error
+        err = mean(abs.(problem.vars[1].u - u_sol))
+        # Error less than 1.0e-08
+        @test err < 1.0e-08
     end
 end
 end
