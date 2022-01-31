@@ -47,7 +47,7 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
 
     # Apply ICs
     @timeit timer "Apply Initial Conditions" applyIC!(problem)
-    
+
     # Transient problem
     problem.time = time_stepper.start_time
     problem.time_old = time_stepper.start_time
@@ -139,7 +139,5 @@ function update!(problem::TransientProblem{T}, solver::Solver{T}) where {T<:Real
             end
         end
     end
-    # Time
-    problem.time_old = problem.time
     return
 end

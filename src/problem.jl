@@ -111,6 +111,7 @@ function reinit!(problem::TransientProblem{T}, time_stepper::TimeStepper{T}) whe
     end
 
     # Time
+    problem.time_old = problem.time
     problem.time = time_stepper.time_seq[problem.time_step]
     problem.dt = problem.time - problem.time_old
     return
@@ -200,10 +201,12 @@ end
 
 function applyIC!(problem::AbstractProblem{T}) where {T<:Real}
     for var in problem.vars
-        var.u = var.u_old = var.func_ic(problem.x)
+        var.u = var.func_ic(problem.x)
+        var.u_old = copy(var.u)
     end
     for aux_var in problem.aux_vars
-        aux_var.u = aux_var.u_old = aux_var.func_ic(problem.x)
+        aux_var.u = aux_var.func_ic(problem.x)
+        aux_var.u_old = copy(aux_var.u)
     end
     return
 end
