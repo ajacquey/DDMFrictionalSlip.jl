@@ -39,7 +39,7 @@ const α = 0.04::Float64
 
         solver = IterativeSolver(problem)
 
-        time_seq = collect(range(0.5, 10.0, 20))
+        time_seq = collect(range(0.5, stop=10.0, step=20))
         time_stepper = TimeSequence(time_seq; start_time=0.0, end_time=10.0)
 
         output = [DomainOutput("outputs/transient_opening"), MaximumOutput("outputs/transient_opening_max")]
