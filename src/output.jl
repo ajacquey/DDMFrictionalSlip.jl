@@ -3,7 +3,6 @@ abstract type AbstractOutput end
 mutable struct DomainOutput <: AbstractOutput
     file::String
     initialized::Bool
-    # p_func::Union{Function, nothing}
 end
 
 mutable struct MaximumOutput <: AbstractOutput
@@ -13,7 +12,6 @@ end
 
 function DomainOutput(filename::String)
     file = checkFilename(filename)
-    # return DomainOuput(file, p_func)
     return DomainOutput(file, false)
 end
 
@@ -57,11 +55,19 @@ function initialize!(output::MaximumOutput, problem::TransientProblem{T}) where 
     output.initialized = true
     open(string(output.file, ".csv"); write = true) do f
         header = "time"
+        # Vars and aux vars values
         for aux_var in problem.aux_vars
             header = string(header, ",", string(aux_var.sym))
         end
         for var in problem.vars
             header = string(header, ",", string(var.sym))
+        end
+        # Vars and aux vars rate values
+        for aux_var in problem.aux_vars
+            header = string(header, ",", string(aux_var.sym, "_dot"))
+        end
+        for var in problem.vars
+            header = string(header, ",", string(var.sym, "_dot"))
         end
         header = string(header, "\n")
         write(f, header)
@@ -73,6 +79,7 @@ function execute!(output::DomainOutput, problem::TransientProblem{T}) where {T<:
     open(string(output.file, "_$(string(problem.time_step, pad=4)).csv"); write = true) do f
         header = "x"
         data = problem.x
+        # Vars and aux vars values
         for aux_var in problem.aux_vars
             header = string(header, ",", string(aux_var.sym))
             data = hcat(data, aux_var.u)
@@ -81,10 +88,17 @@ function execute!(output::DomainOutput, problem::TransientProblem{T}) where {T<:
             header = string(header, ",", string(var.sym))
             data = hcat(data, var.u)
         end
+        # Vars and aux vars rate values
+        for aux_var in problem.aux_vars
+            header = string(header, ",", string(aux_var.sym, "_dot"))
+            data = hcat(data, (aux_var.u - aux_var.u_old) / problem.dt)
+        end
+        for var in problem.vars
+            header = string(header, ",", string(var.sym, "_dot"))
+            data = hcat(data, (var.u - var.u_old) / problem.dt)
+        end
         header = string(header, "\n")
-        ##### TODO #####
-        # Add rate of var
-        ################
+        
         write(f, header) # write header
         writedlm(f, data, ',') # write data
     end
@@ -94,15 +108,20 @@ end
 function execute!(output::MaximumOutput, problem::TransientProblem{T}) where {T<:Real}
     open(string(output.file, ".csv"); append = true) do f
         data = problem.time
+        # Vars and aux vars values
         for aux_var in problem.aux_vars
             data = hcat(data, maximum(aux_var.u))
         end
         for var in problem.vars
             data = hcat(data, maximum(var.u))
         end
-        ##### TODO #####
-        # Add rate of var
-        ################
+        # Vars and aux vars values
+        for aux_var in problem.aux_vars
+            data = hcat(data, maximum((aux_var.u - aux_var.u_old) / problem.dt))
+        end
+        for var in problem.vars
+            data = hcat(data, maximum((var.u - var.u_old) / problem.dt))
+        end
         writedlm(f, data, ',') # write data
     end
     return

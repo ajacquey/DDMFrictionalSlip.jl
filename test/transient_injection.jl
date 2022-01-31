@@ -14,8 +14,8 @@ const α = 0.04::Float64
 
 @testset "Transient injection" begin
     @testset "Opening" begin
-        function sigma_ic(x::Float64)
-            return 1.0
+        function sigma_ic(x::Vector{Float64})
+            return ones(size(x))
         end
 
         function sigma(sigma_old::Float64, x::Float64, t::Float64, Δu::Float64)
