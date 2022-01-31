@@ -78,7 +78,7 @@ function reinitSparsityPattern!(mat::AbstractMatrix{T}, problem::AbstractProblem
         idx_i = ((var_i.id-1)*problem.n_cps+1):(var_i.id*problem.n_cps)
         for var_j in problem.vars
             # Index range
-            idx_j = ((var_i.id-1)*problem.n_cps+1):(var_j.id*problem.n_cps)
+            idx_j = ((var_j.id-1)*problem.n_cps+1):(var_j.id*problem.n_cps)
             if first_run
                 if var_i.id == var_j.id # Diagonal blocks
                     view(mat, idx_i, idx_j) .= sprand(T, problem.n_cps, problem.n_cps, 1.0)

@@ -11,6 +11,7 @@ function run!(problem::SteadyProblem{T}, solver::Solver{T}; log::Bool = true) wh
     # Display some information about simulation
 
     # Apply ICs
+    @timeit timer "Apply Initial Conditions" applyIC!(problem)
 
     # Steady state problem
     solve!(solver, timer; log)
@@ -45,7 +46,8 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
     # Display some information about simulation
 
     # Apply ICs
-
+    @timeit timer "Apply Initial Conditions" applyIC!(problem)
+    
     # Transient problem
     problem.time = time_stepper.start_time
     problem.time_old = time_stepper.start_time

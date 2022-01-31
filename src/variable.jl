@@ -24,6 +24,9 @@ mutable struct Variable{T<:Real} <: AbstractVariable{T}
 
     # " The value of the time derivative of the stress associated variable"
     # s_dot::Vector{T}
+
+    " The function describing the initial conditions"
+    func_ic::Function
 end
 
 mutable struct AuxVariable{T<:Real} <: AbstractVariable{T}
@@ -56,4 +59,7 @@ mutable struct AuxVariable{T<:Real} <: AbstractVariable{T}
 
     # " The old value of the stress associated to this variable"
     # s_old::Vector{T}
+
+    " The function describing the initial conditions"
+    func_ic::Function
 end

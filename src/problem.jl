@@ -31,12 +31,6 @@ mutable struct SteadyProblem{T<:Real} <: AbstractProblem{T}
 
     " A boolean to check if system is initialized"
     initialized::Bool
-
-    # " The displacements"
-    # disp::Vector{T}
-
-    # " The stress"
-    # stress::Vector{T}
 end
 
 mutable struct TransientProblem{T<:Real} <: AbstractProblem{T}
@@ -48,10 +42,6 @@ mutable struct TransientProblem{T<:Real} <: AbstractProblem{T}
 
     " The elastic modulus"
     μ::Float64
-
-    # " Functions describing the stress residuals and jacobian"
-    # stress_residuals::Function
-    # stress_jacobian::Function
 
     " The total number of collocation points"
     n_cps::Int64
@@ -82,14 +72,6 @@ mutable struct TransientProblem{T<:Real} <: AbstractProblem{T}
 
     " A boolean to check if system is initialized"
     initialized::Bool
-
-    # " The displacements"
-    # disp::Vector{T}
-    # disp_old::Vector{T}
-
-    # " The stress"
-    # stress::Vector{T}
-    # stress_old::Vector{T}
 end
 
 function Problem(mesh::Mesh{T}; μ::T = 1.0, order::Int64 = 0, transient::Bool = false) where {T<:Real}
@@ -134,7 +116,11 @@ function reinit!(problem::TransientProblem{T}, time_stepper::TimeStepper{T}) whe
     return
 end
 
-function addVariable!(problem::AbstractProblem{T}, sym::Symbol) where {T<:Real}
+function default_ic(x::Float64)
+    return 0.0
+end
+
+function addVariable!(problem::AbstractProblem{T}, sym::Symbol; func_ic::Function = default_ic) where {T<:Real}
     # Check if symbol is not already used
     for var in problem.vars
         if var.sym == sym
@@ -150,15 +136,15 @@ function addVariable!(problem::AbstractProblem{T}, sym::Symbol) where {T<:Real}
 
     # Add variable to problem
     if problem isa SteadyProblem{T}
-        push!(problem.vars, Variable{T}(id, sym, zeros(T, problem.n_cps), zeros(T, 0)))
+        push!(problem.vars, Variable{T}(id, sym, zeros(T, problem.n_cps), zeros(T, 0), func_ic))
     elseif problem isa TransientProblem{T}
-        push!(problem.vars, Variable{T}(id, sym, zeros(T, problem.n_cps), zeros(T, problem.n_cps)))
+        push!(problem.vars, Variable{T}(id, sym, zeros(T, problem.n_cps), zeros(T, problem.n_cps), func_ic))
     end
 
     return
 end
 
-function addAuxVariable!(problem::AbstractProblem{T}, sym::Symbol, ass_var::Symbol, func::Function, dfunc::Function) where {T<:Real}
+function addAuxVariable!(problem::AbstractProblem{T}, sym::Symbol, ass_var::Symbol, func::Function, dfunc::Function; func_ic::Function = default_ic) where {T<:Real}
     # Check if symbol is not already used
     for aux_var in problem.aux_vars
         if aux_var.sym == sym
@@ -179,9 +165,9 @@ function addAuxVariable!(problem::AbstractProblem{T}, sym::Symbol, ass_var::Symb
 
     # Add aux variable to problem
     if problem isa SteadyProblem{T}
-        push!(problem.aux_vars, AuxVariable{T}(id, sym, ass_var, zeros(T, problem.n_cps), zeros(T, 0), func, dfunc))
+        push!(problem.aux_vars, AuxVariable{T}(id, sym, ass_var, zeros(T, problem.n_cps), zeros(T, 0), func, dfunc, func_ic))
     elseif problem isa TransientProblem{T}
-        push!(problem.aux_vars, AuxVariable{T}(id, sym, ass_var, zeros(T, problem.n_cps), zeros(T, problem.n_cps), func, dfunc))
+        push!(problem.aux_vars, AuxVariable{T}(id, sym, ass_var, zeros(T, problem.n_cps), zeros(T, problem.n_cps), func, dfunc, func_ic))
     end
 
     return
@@ -209,5 +195,15 @@ function initialize!(problem::AbstractProblem{T}) where {T<:Real}
         end
     end
 
+    return
+end
+
+function applyIC!(problem::AbstractProblem{T}) where {T<:Real}
+    for var in problem.vars
+        var.u = var.u_old = var.func_ic.(problem.x)
+    end
+    for aux_var in problem.aux_vars
+        aux_var.u = aux_var.u_old = aux_var.func_ic.(problem.x)
+    end
     return
 end
