@@ -47,7 +47,7 @@ mutable struct AuxVariable{T<:Real} <: AbstractVariable{T}
 
     " The function to update the jacobian"
     dfunc::Function
-    
+
     # " The value of the time derivative of the variable"
     # u_dot::Vector{T}
 

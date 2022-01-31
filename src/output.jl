@@ -40,7 +40,7 @@ function checkFilename(filename::String)
         if (!isdir(output_dir))
             mkpath(output_dir)
         end
-        return string(output_dir, filename[k_end + 1:end])
+        return string(output_dir, filename[k_end+1:end])
     else
         return string(@__DIR__, filename)
     end
@@ -55,7 +55,7 @@ end
 function initialize!(output::MaximumOutput, problem::TransientProblem{T}) where {T<:Real}
     output.file = checkFilename(output.file)
     output.initialized = true
-    open(string(output.file, ".csv"); write=true) do f
+    open(string(output.file, ".csv"); write = true) do f
         header = "time"
         for aux_var in problem.aux_vars
             header = string(header, ",", string(aux_var.sym))
@@ -70,7 +70,7 @@ function initialize!(output::MaximumOutput, problem::TransientProblem{T}) where 
 end
 
 function execute!(output::DomainOutput, problem::TransientProblem{T}) where {T<:Real}
-    open(string(output.file, "_$(string(problem.time_step, pad=4)).csv"); write=true) do f
+    open(string(output.file, "_$(string(problem.time_step, pad=4)).csv"); write = true) do f
         header = "x"
         data = problem.x
         for aux_var in problem.aux_vars
@@ -92,7 +92,7 @@ function execute!(output::DomainOutput, problem::TransientProblem{T}) where {T<:
 end
 
 function execute!(output::MaximumOutput, problem::TransientProblem{T}) where {T<:Real}
-    open(string(output.file, ".csv"); append=true) do f
+    open(string(output.file, ".csv"); append = true) do f
         data = problem.time
         for aux_var in problem.aux_vars
             data = hcat(data, maximum(aux_var.u))
@@ -112,7 +112,7 @@ function outputResults!(outputs::Vector{AbstractOutput}, problem::AbstractProble
     for output in outputs
         execute!(output, problem)
     end
-    return 
+    return
 end
 
 function initializeOutputs!(outputs::Vector{AbstractOutput}, problem::TransientProblem{T}) where {T<:Real}
