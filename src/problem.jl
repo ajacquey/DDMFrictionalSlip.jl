@@ -116,8 +116,8 @@ function reinit!(problem::TransientProblem{T}, time_stepper::TimeStepper{T}) whe
     return
 end
 
-function default_ic(x::Float64)
-    return 0.0
+function default_ic(x::Vector{T}) where {T<:Real}
+    return zeros(x)
 end
 
 function addVariable!(problem::AbstractProblem{T}, sym::Symbol; func_ic::Function = default_ic) where {T<:Real}
@@ -200,10 +200,10 @@ end
 
 function applyIC!(problem::AbstractProblem{T}) where {T<:Real}
     for var in problem.vars
-        var.u = var.u_old = var.func_ic.(problem.x)
+        var.u = var.u_old = var.func_ic(problem.x)
     end
     for aux_var in problem.aux_vars
-        aux_var.u = aux_var.u_old = aux_var.func_ic.(problem.x)
+        aux_var.u = aux_var.u_old = aux_var.func_ic(problem.x)
     end
     return
 end
