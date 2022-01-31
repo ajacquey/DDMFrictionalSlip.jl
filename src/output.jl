@@ -46,37 +46,64 @@ function checkFilename(filename::String)
     end
 end
 
-function initialize!(output::DomainOutput)
+function initialize!(output::DomainOutput, problem::AbstractProblem{T}) where {T<:Real}
     output.file = checkFilename(output.file)
     output.initialized = true
     return
 end
 
-function initialize!(output::MaximumOutput)
+function initialize!(output::MaximumOutput, problem::TransientProblem{T}) where {T<:Real}
     output.file = checkFilename(output.file)
     output.initialized = true
     open(string(output.file, ".csv"); write=true) do f
-        write(f, "time,tau,delta,delta_dot\n")
+        header = "time"
+        for aux_var in problem.aux_vars
+            header = string(header, ",", string(aux_var.sym))
+        end
+        for var in problem.vars
+            header = string(header, ",", string(var.sym))
+        end
+        header = string(header, "\n")
+        write(f, header)
     end
     return
 end
 
 function execute!(output::DomainOutput, problem::TransientProblem{T}) where {T<:Real}
     open(string(output.file, "_$(string(problem.time_step, pad=4)).csv"); write=true) do f
-        # if isnothing(output.p_func)
-        write(f, "x,tau,delta,delta_dot\n") # header
-        writedlm(f, hcat(problem.x, problem.stress, problem.disp, (problem.disp .- problem.disp_old) / problem.dt), ',')
-        # else
-        #     write(f, "x,tau,p,delta,delta_dot\n") # header
-        #     writedlm(f, hcat(problem.x, problem.stress, output.p_func.(problem.x, problem.t), problem.disp, (problem.disp .- problem.disp_old) / problem.dt), ',')
-        # end
+        header = "x"
+        data = problem.x
+        for aux_var in problem.aux_vars
+            header = string(header, ",", string(aux_var.sym))
+            data = hcat(data, aux_var.u)
+        end
+        for var in problem.vars
+            header = string(header, ",", string(var.sym))
+            data = hcat(data, var.u)
+        end
+        header = string(header, "\n")
+        ##### TODO #####
+        # Add rate of var
+        ################
+        write(f, header) # write header
+        writedlm(f, data, ',') # write data
     end
     return
 end
 
 function execute!(output::MaximumOutput, problem::TransientProblem{T}) where {T<:Real}
     open(string(output.file, ".csv"); append=true) do f
-        writedlm(f, [problem.time maximum(problem.stress) maximum(problem.disp) maximum(problem.disp .- problem.disp_old) / problem.dt ], ',')
+        data = problem.time
+        for aux_var in problem.aux_vars
+            data = hcat(data, maximum(aux_var.u))
+        end
+        for var in problem.vars
+            data = hcat(data, maximum(var.u))
+        end
+        ##### TODO #####
+        # Add rate of var
+        ################
+        writedlm(f, data, ',') # write data
     end
     return
 end
@@ -88,9 +115,9 @@ function outputResults!(outputs::Vector{AbstractOutput}, problem::AbstractProble
     return 
 end
 
-function initializeOutputs!(outputs::Vector{AbstractOutput})
+function initializeOutputs!(outputs::Vector{AbstractOutput}, problem::TransientProblem{T}) where {T<:Real}
     for output in outputs
-        initialize!(output)
+        initialize!(output, problem)
     end
     return
 end

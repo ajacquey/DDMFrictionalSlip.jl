@@ -39,7 +39,7 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
 
     # Initialize outputs
     if ~isempty(outputs)
-        @timeit timer "Initialize Outputs" initializeOutputs!(outputs)
+        @timeit timer "Initialize Outputs" initializeOutputs!(outputs, problem)
     end
 
     # Display some information about simulation
