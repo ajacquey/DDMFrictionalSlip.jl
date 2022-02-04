@@ -213,7 +213,9 @@ function initialize!(problem::AbstractProblem{T}) where {T<:Real}
     end
 
     # Update number of dofs
-    problem.n_dofs = problem.n_cps * length(problem.vars)
+    if problem.n_dofs != problem.n_cps * length(problem.vars)
+        throw(ErrorException("Corrupted number of dofs! Did you add a Variable after declaring the solver?"))
+    end
 
     # Check that each variable has an associated kernel
     for var in problem.vars

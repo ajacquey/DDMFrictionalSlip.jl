@@ -30,27 +30,10 @@ end
 Constructor for Solver
 """
 function IterativeSolver(problem::AbstractProblem{T}; nl_max_iters::Int64 = 100, nl_abs_tol::T = 1.0e-10, nl_rel_tol::T = 1.0e-10) where {T<:Real}
-    
-    # Build mat
-    n_vars = length(problem.vars)
-    n_blocks = n_vars^2
-    blocks = Vector{AbstractMatrix{T}}(undef, n_blocks)
-    for i_var in problem.vars
-        for j_var in problem.vars
-            if i_var == j_var
-                blocks[(i_var.id - 1) * n_vars + j_var.id] = sprand(T, problem.n_cps, problem.n_cps, 1.0)
-            else
-                blocks[(i_var.id - 1) * n_vars + j_var.id] = spdiagm(0 => zeros(T, problem.n_cps))
-            end
-        end
-    end
-
-    mat = hvcat(Tuple(n_vars for _ in 1:n_vars), blocks...)
-
     return IterativeSolver{T}(
         problem,
         # spzeros(T, problem.n_dofs, problem.n_dofs),
-        mat,
+        assembleInitialJacobian(problem),
         zeros(T, problem.n_dofs),
         zeros(T, problem.n_dofs),
         # Vector{T}(undef, problem.n_dofs),
@@ -70,18 +53,6 @@ function Base.show(io::IO, solv::IterativeSolver{T}) where {T<:Real}
     # println("  ", show(solv.pro))
     println("     res size: $(length(solv.rhs))")
     println("     Jac size: $(size(solv.mat))")
-end
-
-"Initializes the jacobian and residuals to the correct size"
-function initialize!(solver::IterativeSolver{T}) where {T<:Real}
-    # # To call after initializing the problem
-    # n_dofs = solver.problem.n_dofs
-    # solver.mat = spzeros(T, n_dofs, n_dofs)
-    # reinitSparsityPattern!(solver.mat, solver.problem; first_run = true)
-    # solver.rhs = zeros(T, n_dofs)
-    # solver.solution = zeros(T, n_dofs)
-    # solver.initialized = true
-    return
 end
 
 function reinit!(solver::IterativeSolver{T}) where {T<:Real}

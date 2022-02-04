@@ -1,3 +1,35 @@
+function assembleInitialJacobian(problem::AbstractProblem{T})::AbstractMatrix{T} where {T<:Real}
+    # Number of dof per variable
+    n_cps = problem.n_cps
+    # Number of dofs
+    n_dofs = problem.n_dofs
+    # Numver of vars
+    n_vars = length(problem.vars)
+
+    # Diagonal blocks - Collocation matrix 
+    E = sprand(T, n_cps, n_cps, 1.0)
+    collocationMatrix!(E, problem.mesh, problem.order; μ = problem.μ)
+    
+    # Off-digonal blocks
+    I = spdiagm(0 => zeros(T, n_cps))
+
+    # List of blocks - CHECK IF WE CAN AVOID DECLARING THAT!!!
+    blocks = Vector{AbstractMatrix{T}}(undef, 0)
+
+    # Build matrix 
+    for i in 1:n_vars
+        for j in 1:n_vars
+            if i == j
+                push!(blocks, E)
+            else
+                push!(blocks, I)
+            end
+        end
+    end
+
+    return hvcat(Tuple(n_vars for _ in 1:n_vars), blocks...)
+end
+
 function assembleResidualAndJacobian!(solver::Solver{T}, problem::AbstractProblem{T}, timer::TimerOutput) where {T<:Real}
     @timeit timer "Assembly" begin
         # Jacobian = Collocation matrix
@@ -11,7 +43,13 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::AbstractProble
                         idx_j = ((var_j.id-1)*problem.n_cps+1):(var_j.id*problem.n_cps)
                         if var_i == var_j
                             # Collocation matrix
-                            collocationMatrix!(view(solver.mat, idx_i, idx_j), problem.mesh, problem.order; μ = problem.μ)
+                            # Start building matrix element-wise
+                            n_cp = problem.order + 1
+                            Threads.@threads for elem in problem.mesh.elems
+                                idx = (elem.id-1)*n_cp+1:elem.id*n_cp
+                                localCollocationMatrix!(view(view(solver.mat, idx_i, idx_j), idx, idx), elem, elem, problem.order, problem.μ)
+                                # collocationMatrix!(view(solver.mat, idx_i, idx_j), problem.mesh, problem.order; μ = problem.μ)
+                            end
                         else
                             # Off diagonal blocks
                             view(solver.mat, idx_i, idx_j) .= spdiagm(0 => zeros(T, problem.n_cps))
