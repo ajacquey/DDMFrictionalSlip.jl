@@ -63,7 +63,10 @@ function kernelJacobian!(solver::Solver{T}, problem::AbstractProblem{T}) where {
     n_cp = problem.order + 1
 
     # Loop over elements
+    # THIS IS NOT THREAD SAFE BECAUSE WE MODIFY nzval
+    cond = Base.Threads.Condition()
     Threads.@threads for elem in problem.mesh.elems
+        lock(cond)
         for kernel in problem.kernels
             for i in 1:n_cp
                 # Effective idx
@@ -73,11 +76,12 @@ function kernelJacobian!(solver::Solver{T}, problem::AbstractProblem{T}) where {
                 for j_var in problem.vars
                     # Effective idx
                     idx_j = (j_var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
-
+                    
                     solver.mat[idx_i, idx_j] -= computeCpJacobian(kernel, j_var, problem.time, problem.x[idx_var], idx_var)
                 end
             end
         end
+        unlock(cond)
     end
 
     return
