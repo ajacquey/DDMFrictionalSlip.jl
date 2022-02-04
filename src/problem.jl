@@ -150,6 +150,9 @@ function addVariable!(problem::AbstractProblem{T}, sym::Symbol; func_ic::Functio
     # ID for new variable
     id = n_var + 1
 
+    # Update number of dofs
+    problem.n_dofs = problem.n_cps * (n_var + 1)
+
     # Add variable to problem
     if problem isa SteadyProblem{T}
         var = Variable{T}(id, sym, zeros(T, problem.n_cps), zeros(T, 0), func_ic)
