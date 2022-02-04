@@ -143,6 +143,8 @@ function solve!(solver::IterativeSolver{T}, timer::TimerOutput; log::Bool = true
 
         # Update solution
         solver.solution .+= dx
+        # Update problem
+        @timeit timer "Update problem" update!(solver.problem, solver)
         # Update residuals and jacobian
         assembleResidualAndJacobian!(solver, solver.problem, timer)
         r = norm(solver.rhs)

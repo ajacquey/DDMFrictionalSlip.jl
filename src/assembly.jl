@@ -3,10 +3,21 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::AbstractProble
         # Jacobian = Collocation matrix
         @timeit timer "Jacobian" begin
             @timeit timer "Collocation" begin
-                for var in problem.vars
+                for var_i in problem.vars
                     # Index range
-                    idx = ((var.id-1)*problem.n_cps+1):(var.id*problem.n_cps)
-                    collocationMatrix!(view(solver.mat, idx, idx), problem.mesh, problem.order; μ = problem.μ)
+                    idx_i = ((var_i.id-1)*problem.n_cps+1):(var_i.id*problem.n_cps)
+                    for var_j in problem.vars
+                        # Index range
+                        idx_j = ((var_j.id-1)*problem.n_cps+1):(var_j.id*problem.n_cps)
+                        if var_i == var_j
+                            # Collocation matrix
+                            collocationMatrix!(view(solver.mat, idx_i, idx_j), problem.mesh, problem.order; μ = problem.μ)
+                        else
+                            # Off diagonal blocks
+                            view(solver.mat, idx_i, idx_j) .= spdiagm(0 => zeros(T, problem.n_cps))
+                        end
+                    
+                    end
                 end
             end
         end
@@ -16,35 +27,30 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::AbstractProble
             # Collocation stress
             @timeit timer "Collocation" mul!(solver.rhs, solver.mat, solver.solution)
             # Imposed stress
-            # @timeit timer "Imposed stress" solver.rhs .-= problem.stress_function.(problem.x)
-            @timeit timer "Stress residuals" stressResiduals!(solver, problem)
+            @timeit timer "Stress residuals" kernelResiduals!(solver, problem)
         end
 
         @timeit timer "Jacobian" begin
 
-            @timeit timer "Stress jacobian" stressJacobian!(solver, problem)
+            @timeit timer "Stress jacobian" kernelJacobian!(solver, problem)
         end
     end
     return
 end
 
-function stressResiduals!(solver::Solver{T}, problem::SteadyProblem{T}) where {T<:Real}
+function kernelResiduals!(solver::Solver{T}, problem::AbstractProblem{T}) where {T<:Real}
     # Number of collocation points
     n_cp = problem.order + 1
 
     # Loop over elements
     Threads.@threads for elem in problem.mesh.elems
-        for i in 1:n_cp
-            for var in problem.vars
+        for kernel in problem.kernels
+            for i in 1:n_cp
                 # Effective idx
-                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
+                idx = (kernel.u.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
                 idx_var = (elem.id - 1) * n_cp + i
 
-                for aux_var in problem.aux_vars
-                    if aux_var.ass_var == var.sym
-                        solver.rhs[idx] -= aux_var.func(problem.x[idx_var], solver.solution[idx])
-                    end
-                end
+                solver.rhs[idx] -= computeCpResidual(kernel, problem.time, problem.x[idx_var], idx_var)
             end
         end
     end
@@ -52,70 +58,23 @@ function stressResiduals!(solver::Solver{T}, problem::SteadyProblem{T}) where {T
     return
 end
 
-function stressResiduals!(solver::Solver{T}, problem::TransientProblem{T}) where {T<:Real}
+function kernelJacobian!(solver::Solver{T}, problem::AbstractProblem{T}) where {T<:Real}
     # Number of collocation points
     n_cp = problem.order + 1
 
     # Loop over elements
     Threads.@threads for elem in problem.mesh.elems
-        for i in 1:n_cp
-            for var in problem.vars
+        for kernel in problem.kernels
+            for i in 1:n_cp
                 # Effective idx
-                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
+                idx_i = (kernel.u.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
                 idx_var = (elem.id - 1) * n_cp + i
 
-                for aux_var in problem.aux_vars
-                    if aux_var.ass_var == var.sym
-                        solver.rhs[idx] -= (aux_var.func(aux_var.u_old[idx_var], problem.x[idx_var], problem.time, solver.solution[idx]) - aux_var.u_old[idx_var])
-                    end
-                end
-            end
-        end
-    end
+                for j_var in problem.vars
+                    # Effective idx
+                    idx_j = (j_var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
 
-    return
-end
-
-function stressJacobian!(solver::Solver{T}, problem::SteadyProblem{T}) where {T<:Real}
-    # Number of collocation points
-    n_cp = problem.order + 1
-
-    # Loop over elements
-    Threads.@threads for elem in problem.mesh.elems
-        for i in 1:n_cp
-            for var in problem.vars
-                # Effective idx
-                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
-                idx_var = (elem.id - 1) * n_cp + i
-
-                for aux_var in problem.aux_vars
-                    if aux_var.ass_var == var.sym
-                        solver.mat[idx, idx] -= aux_var.dfunc(problem.x[idx_var], solver.solution[idx])
-                    end
-                end
-            end
-        end
-    end
-
-    return
-end
-
-function stressJacobian!(solver::Solver{T}, problem::TransientProblem{T}) where {T<:Real}
-    # Number of collocation points
-    n_cp = problem.order + 1
-
-    # Loop over elements
-    Threads.@threads for elem in problem.mesh.elems
-        for i in 1:n_cp
-            for var in problem.vars
-                # Effective idx
-                idx = (var.id - 1) * problem.n_cps + (elem.id - 1) * n_cp + i
-                idx_var = (elem.id - 1) * n_cp + i
-
-                for aux_var in problem.aux_vars
-                    if aux_var.ass_var == var.sym
-                        solver.mat[idx, idx] -= aux_var.dfunc(aux_var.u_old[idx_var], problem.x[idx_var], problem.time, solver.solution[idx])
-                    end
+                    solver.mat[idx_i, idx_j] -= computeCpJacobian(kernel, j_var, problem.time, problem.x[idx_var], idx_var)
                 end
             end
         end

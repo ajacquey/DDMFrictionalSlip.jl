@@ -5,12 +5,8 @@ using Statistics
 using Test
 
 # Imposed stress
-function stress_res(x::Float64, u::Float64)
+function stress(t::Float64, x::Float64)
     return -1.0
-end
-
-function stress_jac(x::Float64, u::Float64)
-    return 0.0
 end
 
 # Analytical solution
@@ -24,14 +20,15 @@ end
 
         problem = Problem(mesh; order = 0)
         solver = IterativeSolver(problem)
-        addVariable!(problem, :u)
-        addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
+        u = addVariable!(problem, :u)
+        addKernel!(problem, FunctionKernel(u, stress))
+        # σ = addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
         run!(problem, solver; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)
         # Error
-        err = mean(abs.(problem.vars[1].u - δ_sol) ./ δ_sol)
+        err = mean(abs.(u.value - δ_sol) ./ δ_sol)
         # Error less than 2%
         @test err < 0.02
     end
@@ -41,14 +38,15 @@ end
 
         problem = Problem(mesh; order = 1)
         solver = IterativeSolver(problem)
-        addVariable!(problem, :u)
-        addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
+        u = addVariable!(problem, :u)
+        addKernel!(problem, FunctionKernel(u, stress))
+        # σ = addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
         run!(problem, solver; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)
         # Error
-        err = mean(abs.(problem.vars[1].u - δ_sol) ./ δ_sol)
+        err = mean(abs.(u.value - δ_sol) ./ δ_sol)
         # Error less than 2%
         @test err < 0.02
     end
@@ -58,14 +56,15 @@ end
 
         problem = Problem(mesh; order = 2)
         solver = IterativeSolver(problem)
-        addVariable!(problem, :u)
-        addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
+        u = addVariable!(problem, :u)
+        addKernel!(problem, FunctionKernel(u, stress))
+        # σ = addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
         run!(problem, solver; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)
         # Error
-        err = mean(abs.(problem.vars[1].u - δ_sol) ./ δ_sol)
+        err = mean(abs.(u.value - δ_sol) ./ δ_sol)
         # Error less than 2%
         @test err < 0.02
     end

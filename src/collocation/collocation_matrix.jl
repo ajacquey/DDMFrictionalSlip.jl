@@ -1,5 +1,5 @@
 
-function collocationMatrix(mesh::Mesh{T}, order::Int64; μ::T = 1.0) where {T<:Real}
+function collocationMatrix(mesh::Mesh{T}, order::Int64; μ::T = 1.0)::Matrix{T} where {T<:Real}
     # Check order
     @assert order > -1
     @assert order < 3

@@ -82,20 +82,20 @@ function execute!(output::DomainOutput, problem::TransientProblem{T}) where {T<:
         # Vars and aux vars values
         for aux_var in problem.aux_vars
             header = string(header, ",", string(aux_var.sym))
-            data = hcat(data, aux_var.u)
+            data = hcat(data, aux_var.value)
         end
         for var in problem.vars
             header = string(header, ",", string(var.sym))
-            data = hcat(data, var.u)
+            data = hcat(data, var.value)
         end
         # Vars and aux vars rate values
         for aux_var in problem.aux_vars
             header = string(header, ",", string(aux_var.sym, "_dot"))
-            data = hcat(data, (aux_var.u - aux_var.u_old) / problem.dt)
+            data = hcat(data, (aux_var.value - aux_var.value_old) / problem.dt)
         end
         for var in problem.vars
             header = string(header, ",", string(var.sym, "_dot"))
-            data = hcat(data, (var.u - var.u_old) / problem.dt)
+            data = hcat(data, (var.value - var.value_old) / problem.dt)
         end
         header = string(header, "\n")
         
@@ -110,17 +110,17 @@ function execute!(output::MaximumOutput, problem::TransientProblem{T}) where {T<
         data = problem.time
         # Vars and aux vars values
         for aux_var in problem.aux_vars
-            data = hcat(data, maximum(aux_var.u))
+            data = hcat(data, maximum(aux_var.value))
         end
         for var in problem.vars
-            data = hcat(data, maximum(var.u))
+            data = hcat(data, maximum(var.value))
         end
         # Vars and aux vars values
         for aux_var in problem.aux_vars
-            data = hcat(data, maximum((aux_var.u - aux_var.u_old) / problem.dt))
+            data = hcat(data, maximum((aux_var.value - aux_var.value_old) / problem.dt))
         end
         for var in problem.vars
-            data = hcat(data, maximum((var.u - var.u_old) / problem.dt))
+            data = hcat(data, maximum((var.value - var.value_old) / problem.dt))
         end
         writedlm(f, data, ',') # write data
     end

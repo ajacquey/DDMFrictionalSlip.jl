@@ -1,4 +1,4 @@
-function collocationPointsCoordinates(mesh::Mesh{T}, order::Int64) where {T<:Real}
+function collocationPointsCoordinates(mesh::Mesh{T}, order::Int64)::Vector{T} where {T<:Real}
     # Number of collocation points
     n_cp = order + 1
     # Declare results
@@ -28,7 +28,7 @@ function elemCollocationPoints(elem::Elem{T}, order::Int64) where {T<:Real}
     end
 end
 
-function elemCollocationPoints1DCoordinates(elem::Elem{T}, order::Int64) where {T<:Real}
+function elemCollocationPoints1DCoordinates(elem::Elem{T}, order::Int64)::Vector{T} where {T<:Real}
     # Number of collocation points
     n_cp = order + 1
     # Declare vector for c_points
@@ -55,7 +55,7 @@ function elemCollocationPoints1DCoordinates(elem::Elem{T}, order::Int64) where {
     return c_points
 end
 
-function elemCollocationPoints1D(elem::Elem{T}, order::Int64) where {T<:Real}
+function elemCollocationPoints1D(elem::Elem{T}, order::Int64)::Vector{Point{T}} where {T<:Real}
     # Number of collocation points
     n_cp = order + 1
     # Declare vector for c_points
