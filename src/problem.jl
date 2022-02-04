@@ -195,7 +195,7 @@ end
 
 function addKernel!(problem::AbstractProblem{T}, kernel::AbstractKernel{T}) where {T<:Real}
     push!(problem.kernels, kernel)
-    return 
+    return
 end
 
 function addAuxKernel!(problem::AbstractProblem{T}, aux_kernel::AbstractAuxKernel{T}) where {T<:Real}
@@ -238,7 +238,7 @@ function initialize!(problem::AbstractProblem{T}) where {T<:Real}
         if ~exist
             throw(ErrorException("Auxiliary variable $(string(aux_var.sym)) has no associated auxiliary kernel!"))
         end
-        if (i>1)
+        if (i > 1)
             throw(ErrorException("Auxiliary variable $(string(aux_var.sym)) has more than one auxiliary kernel!"))
         end
     end

@@ -98,7 +98,7 @@ function execute!(output::DomainOutput, problem::TransientProblem{T}) where {T<:
             data = hcat(data, (var.value - var.value_old) / problem.dt)
         end
         header = string(header, "\n")
-        
+
         write(f, header) # write header
         writedlm(f, data, ',') # write data
     end

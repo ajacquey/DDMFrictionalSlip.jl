@@ -27,7 +27,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=0)
+        problem = Problem(mesh; order = 0)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)
@@ -58,7 +58,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=1)
+        problem = Problem(mesh; order = 1)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)
@@ -89,7 +89,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=2)
+        problem = Problem(mesh; order = 2)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)
@@ -120,7 +120,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=0)
+        problem = Problem(mesh; order = 0)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)
@@ -151,7 +151,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=1)
+        problem = Problem(mesh; order = 1)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)
@@ -182,7 +182,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=2)
+        problem = Problem(mesh; order = 2)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)
@@ -213,7 +213,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=0)
+        problem = Problem(mesh; order = 0)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)
@@ -244,7 +244,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=1)
+        problem = Problem(mesh; order = 1)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)
@@ -275,7 +275,7 @@ include("injection_utils.jl")
 
         mesh = Mesh1D(-1.0, 1.0, 96)
 
-        problem = Problem(mesh; order=2)
+        problem = Problem(mesh; order = 2)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
         # τ = addAuxVariable!(problem, :tau, :u, stress_res, stress_jac)

@@ -5,7 +5,7 @@ struct LocalElasticAuxKernel{T<:Real} <: AbstractAuxKernel{T}
     " The coupled variable describing the displacement discontinuity"
     v::Variable{T}
 
-   " The elastic modulus"
+    " The elastic modulus"
     μ::T
 
     " The fault thickness"

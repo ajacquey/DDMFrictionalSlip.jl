@@ -16,7 +16,7 @@ function assembleResidualAndJacobian!(solver::Solver{T}, problem::AbstractProble
                             # Off diagonal blocks
                             view(solver.mat, idx_i, idx_j) .= spdiagm(0 => zeros(T, problem.n_cps))
                         end
-                    
+
                     end
                 end
             end
