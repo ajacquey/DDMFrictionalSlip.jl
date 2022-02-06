@@ -19,11 +19,9 @@ end
         mesh = Mesh1D(-1.0, 1.0, 96)
 
         problem = Problem(mesh; order = 0)
-        solver = IterativeSolver(problem)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
-        # σ = addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
-        run!(problem, solver; log = false)
+        run!(problem; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)
@@ -37,11 +35,9 @@ end
         mesh = Mesh1D(-1.0, 1.0, 48)
 
         problem = Problem(mesh; order = 1)
-        solver = IterativeSolver(problem)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
-        # σ = addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
-        run!(problem, solver, log = false)
+        run!(problem; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)
@@ -55,11 +51,9 @@ end
         mesh = Mesh1D(-1.0, 1.0, 32)
 
         problem = Problem(mesh; order = 2)
-        solver = IterativeSolver(problem)
         u = addVariable!(problem, :u)
         addKernel!(problem, FunctionKernel(u, stress))
-        # σ = addAuxVariable!(problem, :stress, :u, stress_res, stress_jac)
-        run!(problem, solver; log = false)
+        run!(problem; log = false)
 
         # Analytical solution
         δ_sol = δ_analytical.(problem.x)

@@ -150,6 +150,9 @@ function addVariable!(problem::AbstractProblem{T}, sym::Symbol; func_ic::Functio
     # ID for new variable
     id = n_var + 1
 
+    # Update number of dofs
+    problem.n_dofs = problem.n_cps * (n_var + 1)
+
     # Add variable to problem
     if problem isa SteadyProblem{T}
         var = Variable{T}(id, sym, zeros(T, problem.n_cps), zeros(T, 0), func_ic)
@@ -195,7 +198,7 @@ end
 
 function addKernel!(problem::AbstractProblem{T}, kernel::AbstractKernel{T}) where {T<:Real}
     push!(problem.kernels, kernel)
-    return 
+    return
 end
 
 function addAuxKernel!(problem::AbstractProblem{T}, aux_kernel::AbstractAuxKernel{T}) where {T<:Real}
@@ -210,7 +213,9 @@ function initialize!(problem::AbstractProblem{T}) where {T<:Real}
     end
 
     # Update number of dofs
-    problem.n_dofs = problem.n_cps * length(problem.vars)
+    if problem.n_dofs != problem.n_cps * length(problem.vars)
+        throw(ErrorException("Corrupted number of dofs! Did you add a Variable after declaring the solver?"))
+    end
 
     # Check that each variable has an associated kernel
     for var in problem.vars
@@ -238,7 +243,7 @@ function initialize!(problem::AbstractProblem{T}) where {T<:Real}
         if ~exist
             throw(ErrorException("Auxiliary variable $(string(aux_var.sym)) has no associated auxiliary kernel!"))
         end
-        if (i>1)
+        if (i > 1)
             throw(ErrorException("Auxiliary variable $(string(aux_var.sym)) has more than one auxiliary kernel!"))
         end
     end

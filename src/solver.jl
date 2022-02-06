@@ -32,10 +32,13 @@ Constructor for Solver
 function IterativeSolver(problem::AbstractProblem{T}; nl_max_iters::Int64 = 100, nl_abs_tol::T = 1.0e-10, nl_rel_tol::T = 1.0e-10) where {T<:Real}
     return IterativeSolver{T}(
         problem,
-        spzeros(T, problem.n_dofs, problem.n_dofs),
-        Vector{T}(undef, problem.n_dofs),
-        Vector{T}(undef, problem.n_dofs),
-        false,
+        # spzeros(T, problem.n_dofs, problem.n_dofs),
+        assembleInitialJacobian(problem),
+        zeros(T, problem.n_dofs),
+        zeros(T, problem.n_dofs),
+        # Vector{T}(undef, problem.n_dofs),
+        # Vector{T}(undef, problem.n_dofs),
+        true,
         nl_max_iters,
         nl_abs_tol,
         nl_rel_tol,
@@ -50,18 +53,6 @@ function Base.show(io::IO, solv::IterativeSolver{T}) where {T<:Real}
     # println("  ", show(solv.pro))
     println("     res size: $(length(solv.rhs))")
     println("     Jac size: $(size(solv.mat))")
-end
-
-"Initializes the jacobian and residuals to the correct size"
-function initialize!(solver::IterativeSolver{T}) where {T<:Real}
-    # To call after initializing the problem
-    n_dofs = solver.problem.n_dofs
-    solver.mat = spzeros(T, n_dofs, n_dofs)
-    reinitSparsityPattern!(solver.mat, solver.problem; first_run = true)
-    solver.rhs = zeros(T, n_dofs)
-    solver.solution = zeros(T, n_dofs)
-    solver.initialized = true
-    return
 end
 
 function reinit!(solver::IterativeSolver{T}) where {T<:Real}

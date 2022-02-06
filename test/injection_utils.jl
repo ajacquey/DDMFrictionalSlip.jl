@@ -15,7 +15,7 @@ Outputs:
     δ: the slip distribution
     λ: the slip to fluid migration factor
 """
-function injection_analytical_gs(T::Float64, N::Int64=100)
+function injection_analytical_gs(T::Float64, N::Int64 = 100)
     # Solve for λ
     λ = lambda_analytical_gs(T, N)
 
@@ -47,9 +47,9 @@ Outputs:
 function lambda_analytical_gs(
     T::Float64,
     N::Int64,
-    max_iters::Int64=200,
-    abs_tol::Float64=1.0e-10,
-    debug::Bool=false,
+    max_iters::Int64 = 200,
+    abs_tol::Float64 = 1.0e-10,
+    debug::Bool = false,
 )
     # Initialization
     λ = 1.0
@@ -105,7 +105,7 @@ end
 The function dF from Viesca and Garagash (2018)
 """
 function dF(s::Float64, u::Float64, λ::Float64)
-    return 1  / π * erfc(λ * abs(s)) / (u - s)
+    return 1 / π * erfc(λ * abs(s)) / (u - s)
 end
 
 """
@@ -126,12 +126,12 @@ Slip evaluated with Gauss-Chebyshev quadrature
 """
 function slip_gs!(δ::Vector{Float64}, x::Vector{Float64}, N::Int64, λ::Float64)
     # Gauss-Chebyshev quadrature points
-    (s, w) = gausschebyshev(N-1, 2)
+    (s, w) = gausschebyshev(N - 1, 2)
 
     # Slip weigth from Viesca and Garagash (2018)
     Φ = [0.5 * (sin(k * acos(xi)) / k - sin((k + 2) * acos(xi)) / (k + 2)) for xi in x, k = N:-1:1]
     B = [2 * sin(acos(sj)) * sin((k + 1) * acos(sj)) / (N + 1) for k = N:-1:1, sj in s]
-    S = zeros(N, N-1)
+    S = zeros(N, N - 1)
     mul!(S, Φ, B)
     mul!(δ, S, F.(s, λ, N))
 end
@@ -158,8 +158,8 @@ Outputs
     
 """
 function slip_distribution_gs(λ::Float64, N::Int64)
-    x = collect(range(-1.0, 1.0, length=N))
-    
+    x = collect(range(-1.0, 1.0, length = N))
+
     δ = similar(x)
     slip_gs!(δ, x, N, λ)
     return (x, δ)

@@ -1,4 +1,4 @@
-function run!(problem::SteadyProblem{T}, solver::Solver{T}; log::Bool = true) where {T<:Real}
+function run!(problem::SteadyProblem{T}; log::Bool = true, nl_max_iters::Int64 = 100, nl_abs_tol::T = 1.0e-10, nl_rel_tol::T = 1.0e-10) where {T<:Real}
     # Timer
     timer = TimerOutput()
 
@@ -6,7 +6,7 @@ function run!(problem::SteadyProblem{T}, solver::Solver{T}; log::Bool = true) wh
     @timeit timer "Initialize Problem" initialize!(problem)
 
     # Initialize solver
-    @timeit timer "Initialize Solver" initialize!(solver)
+    @timeit timer "Initialize Solver" solver = IterativeSolver(problem; nl_max_iters = nl_max_iters, nl_abs_tol = nl_abs_tol, nl_rel_tol = nl_rel_tol)
 
     # Display some information about simulation
 
@@ -28,7 +28,7 @@ function run!(problem::SteadyProblem{T}, solver::Solver{T}; log::Bool = true) wh
     return
 end
 
-function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::TimeStepper; log::Bool = true, outputs::Vector{AbstractOutput} = Vector{AbstractOutput}(undef, 0)) where {T<:Real}
+function run!(problem::TransientProblem{T}, time_stepper::TimeStepper; log::Bool = true, outputs::Vector{AbstractOutput} = Vector{AbstractOutput}(undef, 0), nl_max_iters::Int64 = 100, nl_abs_tol::T = 1.0e-10, nl_rel_tol::T = 1.0e-10) where {T<:Real}
     # Timer
     timer = TimerOutput()
 
@@ -36,7 +36,7 @@ function run!(problem::TransientProblem{T}, solver::Solver{T}, time_stepper::Tim
     @timeit timer "Initialize Problem" initialize!(problem)
 
     # Initialize solver
-    @timeit timer "Initialize Solver" initialize!(solver)
+    @timeit timer "Initialize Solver" solver = IterativeSolver(problem; nl_max_iters = nl_max_iters, nl_abs_tol = nl_abs_tol, nl_rel_tol = nl_rel_tol)
 
     # Initialize outputs
     if ~isempty(outputs)
