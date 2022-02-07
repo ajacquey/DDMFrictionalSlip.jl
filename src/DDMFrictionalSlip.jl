@@ -3,9 +3,6 @@ module DDMFrictionalSlip
 using LinearAlgebra
 using SparseArrays
 using IterativeSolvers
-using Preconditioners
-using IncompleteLU
-# using AlgebraicMultigrid
 using TimerOutputs
 using UnPack
 using DelimitedFiles
