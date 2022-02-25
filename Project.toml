@@ -17,7 +17,7 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 [compat]
 IncompleteLU = "0.2"
 IterativeSolvers = "0.9"
-Preconditioners = "0.4"
+Preconditioners = "0.4, 0.5"
 TimerOutputs = "0.5"
 UnPack = "1"
 julia = "1.6"
