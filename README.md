@@ -2,6 +2,8 @@
 
 [![Build Status](https://github.com/ajacquey/DDMFrictionalSlip.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/ajacquey/DDMFrictionalSlip.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/ajacquey/DDMFrictionalSlip.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ajacquey/DDMFrictionalSlip.jl)
+[![DOI](https://zenodo.org/badge/446497093.svg)](https://zenodo.org/badge/latestdoi/446497093)
+
 
 DDMFrictionalSlip is a julia implementation of the Displacement Discontinuity Method (DDM) for two-dimensional domains (one-dimensional fracture).
 Main features:
