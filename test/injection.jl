@@ -21,7 +21,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
@@ -51,7 +51,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
@@ -80,7 +80,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
@@ -109,7 +109,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
@@ -138,7 +138,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
@@ -167,7 +167,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
@@ -196,7 +196,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
@@ -225,7 +225,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
@@ -254,7 +254,7 @@ include("injection_utils.jl")
         # Analytical solution
         function δ_analytical(x::Vector{Float64})
             x_a, δ_a, λ = injection_analytical_gs(T, length(x))
-            itp = LinearInterpolation(x_a, δ_a) # create interpolation function
+            itp = linear_interpolation(x_a, δ_a) # create interpolation function
             return itp(x)
         end
 
