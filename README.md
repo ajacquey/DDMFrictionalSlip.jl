@@ -34,9 +34,9 @@ $$
     R_{\epsilon} = \Delta \sigma\left(\Delta \epsilon\right) - f_{\epsilon}\left(\Delta \epsilon, \Delta \delta\right) = 0
 $$
 
-where $\Delta \tau$ and $\Delta \sigma$ are the changes in shear and normal stress respectively, $\Delta \delta$ and $\Delta \epsilon$ the changes in slip and opening repectively, and the two functions $f_{\tau}$ and $f_{\epsilon}$ can be defined to account for applied stress, frictional constraints, and/or fluid pressure coupling.
+where $\Delta \tau = E: \Delta \delta$ and $\Delta \sigma = E : \Delta \epsilon$ are the changes in shear and normal stress respectively, $\Delta \delta$ and $\Delta \epsilon$ the changes in slip and opening repectively, and the two functions $f_{\tau}$ and $f_{\epsilon}$ can be defined to account for applied stress, frictional constraints, and/or fluid pressure coupling.
 
 The user needs to specify the two functions $f_{\tau}$ and $f_{\epsilon}$ together with their derivatives with respect to the displacement discontinuity variables to properly calculate the jacobian matrix of the problem.
-Please see the test suite `test/` for examples of formulations.
+Please see the test suite in `test/` for examples of formulations.
 
 Author: Dr. Antoine B. Jacquey
