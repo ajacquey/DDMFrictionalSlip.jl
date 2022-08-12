@@ -62,6 +62,28 @@ function reinit!(solver::IterativeSolver{T}) where {T<:Real}
     return
 end
 
+# function reinitSparsityPattern!(mat::AbstractMatrix{T}, problem::AbstractProblem{T}; first_run = false) where {T<:Real}
+#     # Loop over variables
+#     for var_i in problem.vars
+#         # Index range
+#         idx_i = ((var_i.id-1)*problem.n_cps+1):(var_i.id*problem.n_cps)
+#         for var_j in problem.vars
+#             # Index range
+#             idx_j = ((var_j.id-1)*problem.n_cps+1):(var_j.id*problem.n_cps)
+#             if first_run
+#                 if var_i.id == var_j.id # Diagonal blocks
+#                     view(mat, idx_i, idx_j) .= sprand(T, problem.n_cps, problem.n_cps, 1.0)
+#                 end
+#             end
+#             if var_i.id != var_j.id # Off-diagonal blocks
+#                 view(mat, idx_i, idx_j) .= spdiagm(0 => zeros(T, problem.n_cps))
+#             end
+#         end
+#     end
+
+#     return
+# end
+
 function reinitSparsityPattern!(mat::AbstractMatrix{T}, problem::AbstractProblem{T}; first_run = false) where {T<:Real}
     # Loop over variables
     for var_i in problem.vars
@@ -70,13 +92,8 @@ function reinitSparsityPattern!(mat::AbstractMatrix{T}, problem::AbstractProblem
         for var_j in problem.vars
             # Index range
             idx_j = ((var_j.id-1)*problem.n_cps+1):(var_j.id*problem.n_cps)
-            if first_run
-                if var_i.id == var_j.id # Diagonal blocks
-                    view(mat, idx_i, idx_j) .= sprand(T, problem.n_cps, problem.n_cps, 1.0)
-                end
-            end
-            if var_i.id != var_j.id # Off-diagonal blocks
-                view(mat, idx_i, idx_j) .= spdiagm(0 => zeros(T, problem.n_cps))
+            if (var_i != var_j)
+                view(mat, idx_i, idx_j)[diagind(view(mat, idx_i, idx_j))] .= 0.0
             end
         end
     end
